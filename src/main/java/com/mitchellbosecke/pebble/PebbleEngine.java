@@ -102,6 +102,18 @@ public class PebbleEngine {
      * @throws PebbleException Thrown if an error occurs while parsing the template.
      */
     public PebbleTemplate getTemplate(final String templateName) throws PebbleException {
+	return getTemplate(templateName, defaultLocale);
+    }
+    
+    /**
+     * Loads, parses, and compiles a template into an instance of PebbleTemplate
+     * and returns this instance. Locale aware.
+     *
+     * @param templateName The name of the template
+     * @return PebbleTemplate The compiled version of the template
+     * @throws PebbleException Thrown if an error occurs while parsing the template.
+     */
+    public PebbleTemplate getTemplate(final String templateName, final java.util.Locale locale) throws PebbleException {
 
         /*
          * template name will be null if user uses the extends tag with an
@@ -119,15 +131,15 @@ public class PebbleEngine {
         PebbleTemplate result;
 
         try {
-            final Object cacheKey = this.loader.createCacheKey(templateName);
+            final Object cacheKey = this.loader.isLocaleAware( ) ? this.loader.createCacheKey(templateName, locale) : this.loader.createCacheKey(templateName);
 
             if(isNull(templateCache)){
-                result = getPebbleTemplate(self, templateName, cacheKey);
+                result = getPebbleTemplate(self, templateName, cacheKey, locale);
             }
             else {
                 result = templateCache.get(cacheKey, k -> {
                     try {
-                        return getPebbleTemplate(self, templateName, cacheKey);
+                        return getPebbleTemplate(self, templateName, cacheKey, locale);
                     } catch (PebbleException e) {
                         throw new RuntimePebbleException(e);
                     }
@@ -151,17 +163,17 @@ public class PebbleEngine {
         return result;
     }
 
-    private PebbleTemplate getPebbleTemplate(final PebbleEngine self, final String templateName, final Object cacheKey) throws LoaderException, ParserException {
+    private PebbleTemplate getPebbleTemplate(final PebbleEngine self, final String templateName, final Object cacheKey, final java.util.Locale locale) throws LoaderException, ParserException {
         LexerImpl lexer = new LexerImpl(syntax, extensionRegistry.getUnaryOperators().values(),
                 extensionRegistry.getBinaryOperators().values());
-        Reader templateReader = self.retrieveReaderFromLoader(self.loader, cacheKey);
+        Reader templateReader = self.retrieveReaderFromLoader(self.loader, cacheKey, locale);
         TokenStream tokenStream = lexer.tokenize(templateReader, templateName);
 
         Parser parser = new ParserImpl(extensionRegistry.getUnaryOperators(),
                 extensionRegistry.getBinaryOperators(), extensionRegistry.getTokenParsers());
         RootNode root = parser.parse(tokenStream);
 
-        PebbleTemplateImpl instance = new PebbleTemplateImpl(self, root, templateName);
+        PebbleTemplateImpl instance = new PebbleTemplateImpl(self, root, templateName, locale);
 
         for (NodeVisitorFactory visitorFactory : extensionRegistry.getNodeVisitors()) {
             visitorFactory.createVisitor(instance).visit(root);
@@ -179,12 +191,12 @@ public class PebbleEngine {
      * @return the reader object.
      * @throws LoaderException thrown when the template could not be loaded.
      */
-    private <T> Reader retrieveReaderFromLoader(Loader<T> loader, Object cacheKey) throws LoaderException {
+    private <T> Reader retrieveReaderFromLoader(Loader<T> loader, Object cacheKey, final java.util.Locale locale) throws LoaderException {
         // We make sure within getTemplate() that we use only the same key for
         // the same loader and hence we can be sure that the cast is safe.
         @SuppressWarnings("unchecked")
         T casted = (T) cacheKey;
-        return loader.getReader(casted);
+        return loader.isLocaleAware( ) ? loader.getReader(casted, locale) : loader.getReader(casted);
     }
 
     /**

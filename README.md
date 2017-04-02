@@ -1,4 +1,12 @@
-#Pebble
+#Pebble Fork
+
+Simple fork for having `com.mitchellbosecke.pebble.PebbleEngine`, `com.mitchellbosecke.pebble.template.PebbleTemplateImpl` and `com.mitchellbosecke.pebble.loader.Loader` all capable to use a specific locale (`java.util.Locale`) not only during the evaluation phase but also during the compilation phase. This allows for plugging in custom engines or loaders capable to use locale information during every step of the template life cycle.
+
+The simplest use case is to support a "pre-compilation" phase where templates are retrieved, assembled, compiled, evaluated for locale-dependent and other static expressions (e.g. i18n-related expressions that are scattered across all the template and make up 90% of its logic). The resulting string is then used to build the real template object (the one that is going to be cached, with far less instructions in it).
+
+The few code additions try to minimize the impact of future merge operations (and so there are default methods or methods that just throw a "don't use me" exception).
+
+# Pebble
 
 Pebble is a java templating engine inspired by [Twig](http://twig.sensiolabs.org/). Its biggest feature is template inheritance which enables multiple templates to easily share common code. For more information please visit the [official website](http://www.mitchellbosecke.com/pebble).
 

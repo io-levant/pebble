@@ -58,16 +58,23 @@ public class PebbleTemplateImpl implements PebbleTemplate {
     private final String name;
 
     /**
+     * In the locale-aware fork, PebbleTemplateImpl may be associated to a specific locale during their whole lifetime
+     */
+    private final java.util.Locale locale;
+    
+    /**
      * Constructor
      *
      * @param engine The pebble engine used to construct this template
      * @param root   The root not to evaluate
      * @param name   The name of the template
+     * @param locale The specific locale that must be associated to this template for its whole lifetime
      */
-    public PebbleTemplateImpl(PebbleEngine engine, RootNode root, String name) {
+    public PebbleTemplateImpl(PebbleEngine engine, RootNode root, String name, final java.util.Locale locale) {
         this.engine = engine;
         this.rootNode = root;
         this.name = name;
+        this.locale = locale;
     }
 
     public void evaluate(Writer writer) throws PebbleException, IOException {
@@ -154,7 +161,7 @@ public class PebbleTemplateImpl implements PebbleTemplate {
      *                         template
      */
     public void importTemplate(EvaluationContextImpl context, String name) throws PebbleException {
-        context.getImportedTemplates().add((PebbleTemplateImpl) engine.getTemplate(this.resolveRelativePath(name)));
+        context.getImportedTemplates().add((PebbleTemplateImpl) engine.getTemplate(this.resolveRelativePath(name), locale));
     }
 
     /**
@@ -170,7 +177,7 @@ public class PebbleTemplateImpl implements PebbleTemplate {
      */
     public void includeTemplate(Writer writer, EvaluationContextImpl context, String name, Map<?, ?> additionalVariables)
             throws PebbleException, IOException {
-        PebbleTemplateImpl template = (PebbleTemplateImpl) engine.getTemplate(this.resolveRelativePath(name));
+        PebbleTemplateImpl template = (PebbleTemplateImpl) engine.getTemplate(this.resolveRelativePath(name), locale);
         EvaluationContextImpl newContext = context.shallowCopyWithoutInheritanceChain(template);
         ScopeChain scopeChain = newContext.getScopeChain();
         scopeChain.pushScope();
@@ -339,7 +346,7 @@ public class PebbleTemplateImpl implements PebbleTemplate {
 
     public void setParent(EvaluationContextImpl context, String parentName) throws PebbleException {
         context.getHierarchy()
-                .pushAncestor((PebbleTemplateImpl) engine.getTemplate(this.resolveRelativePath(parentName)));
+                .pushAncestor((PebbleTemplateImpl) engine.getTemplate(this.resolveRelativePath(parentName), locale));
     }
 
     /**
